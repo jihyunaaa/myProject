@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="PurchaseDAO">
+
+	<resultMap id="purchaseMap" type="purchase">
+		<id property="purchaseNumber" column="PURCHASE_NUMBER" />
+		<result property="purchaseTerminalId" column="PURCHASE_TERMINAL_ID" />
+		<result property="purchaseTotalPrice" column="PURCHASE_TOTAL_PRICE" />
+		<result property="memberNumber" column="MEMBER_NUMBER" />
+		<result property="totalCountNumber" column="TOTAL_COUNT_NUMBER" />
+	</resultMap>
+	
+	<!-- getAll -->
+	<!-- 주문 목록 전체 조회 (최신순) -->
+	<select id="SELECTALL" resultMap="purchaseMap">
+	SELECT PURCHASE_NUMBER, PURCHASE_TERMINAL_ID, PURCHASE_TOTAL_PRICE, MEMBER_NUMBER, TOTAL_COUNT_NUMBER
+	 FROM (SELECT PURCHASE_NUMBER, PURCHASE_TERMINAL_ID, PURCHASE_TOTAL_PRICE, MEMBER_NUMBER, ROW_NUMBER() OVER
+	 (ORDER BY PURCHASE_NUMBER DESC) AS RN, COUNT(PURCHASE_NUMBER) OVER() AS TOTAL_COUNT_NUMBER FROM PURCHASE) WHERE RN BETWEEN #{purchaseIndex} AND #{purchaseContentCount}
+	</select>
+
+	<!-- 한 사용자의 주문 목록 전체 조회-->
+	<select id="SELECTALLONEPERSON" resultMap="purchaseMap">
+	SELECT PURCHASE_NUMBER, PURCHASE_TERMINAL_ID, PURCHASE_TOTAL_PRICE, MEMBER_NUMBER, TOTAL_COUNT_NUMBER FROM
+	 (SELECT PURCHASE_NUMBER, PURCHASE_TERMINAL_ID, PURCHASE_TOTAL_PRICE, MEMBER_NUMBER, ROW_NUMBER() OVER (ORDER BY PURCHASE_NUMBER DESC)
+	 AS RN, COUNT(PURCHASE_NUMBER) OVER (PARTITION BY MEMBER_NUMBER) AS TOTAL_COUNT_NUMBER FROM PURCHASE WHERE MEMBER_NUMBER = #{memberNumber})
+	 WHERE RN BETWEEN #{purchaseIndex} AND #{purchaseContentCount}
+	</select>
+
+	<!-- getOne -->
+	<!-- 주문 정보 상세 조회 -->
+	<select id="SELECTONE" resultMap="purchaseMap">
+	SELECT PURCHASE_NUMBER, PURCHASE_TERMINAL_ID, PURCHASE_TOTAL_PRICE, MEMBER_NUMBER FROM PURCHASE WHERE PURCHASE_NUMBER = #{purchaseNumber}
+	</select>
+
+	<!-- insert -->
+	<!-- 주문 번호 생성 -->
+	<select id="GETNEXTPURCHASENUMBER" resultType="java.lang.Long">
+		SELECT SEQ_PURCHASE.NEXTVAL FROM DUAL
+	</select>
+
+	<!-- 주문 등록 -->
+	<insert id="INSERT">
+	INSERT INTO PURCHASE (PURCHASE_NUMBER, PURCHASE_TERMINAL_ID, PURCHASE_TOTAL_PRICE, MEMBER_NUMBER)
+	 VALUES (#{purchaseNumber}, #{purchaseTerminalId}, #{purchaseTotalPrice}, #{memberNumber})
+	</insert>
+
+	<!-- update
+	<update id="">
+	</update> -->
+
+	<!-- delete -->
+	<!-- 주문 취소 -->
+	<delete id="DELETEPURCHASE">
+	DELETE FROM PURCHASE WHERE PURCHASE_NUMBER = #{purchaseNumber}
+	</delete>
+
+	<!-- 탈퇴한 회원 주문 목록 삭제 -->
+	<delete id="DELETECANCELMEMBER">
+	DELETE FROM PURCHASE WHERE MEMBER_NUMBER = #{memberNumber}
+	</delete>
+</mapper>

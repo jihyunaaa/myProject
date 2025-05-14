@@ -1,0 +1,22 @@
+#spring:
+#  application:
+#    name: honeyComboFactory
+#
+#resources:
+#  static-locations: classpath:/static/,classpath:/public/,classpath:/assets/
+#
+#servlet:
+#  multipart:
+#    max-file-size: 50MB
+#    max-request-size: 50MB
+#    max-http-request-size: 50MB
+#
+## 파일 업로드 경로
+#upload:
+#  path: C:/Users/LG/OneDrive/Desktop/boardImg/
+#
+#server:
+#  port: 8088
+
+mybatis:
+  config-location: classpath:sql-map-config.xml # MyBatis 전역 설정 파일

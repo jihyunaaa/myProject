@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="ProductComboComponentDAO">
+
+	<resultMap id="productComboComponentMap" type="productComboComponent">
+	    <result property="productComboComponentNumber" column="PRODUCT_COMBO_COMPONENT_NUMBER"/>
+	    <result property="productComboComponentOne" column="PRODUCT_COMBO_COMPONENT_ONE"/>
+	    <result property="productComboComponentTwo" column="PRODUCT_COMBO_COMPONENT_TWO"/>
+	    <result property="productComboComponentThree" column="PRODUCT_COMBO_COMPONENT_THREE"/>
+	    <result property="productComboNumber" column="PRODUCT_COMBO_NUMBER"/>
+	    <result property="totalCountNumber" column="TOTAL_COUNT_NUMBER"/>
+	    <result property="productSingleNumber" column="PRODUCT_SINGLE_NUMBER"/>
+	    <result property="productSingleName" column="PRODUCT_SINGLE_NAME"/>
+	    <result property="productSingleImage" column="PRODUCT_SINGLE_IMAGE"/>
+	    <result property="productSingleDiscountedPrice" column="SINGLE_DISCOUNTED_PRICE"/>
+	</resultMap>
+
+
+	<!-- getAll -->
+	<!-- 조합 구성품 전체 조회-->
+	<select id="SELECTALL" resultMap="productComboComponentMap">
+	SELECT PRODUCT_COMBO_COMPONENT_NUMBER, PRODUCT_COMBO_COMPONENT_ONE, PRODUCT_COMBO_COMPONENT_TWO,
+	 PRODUCT_COMBO_COMPONENT_THREE, PRODUCT_COMBO_NUMBER, TOTAL_COUNT_NUMBER
+	 FROM (SELECT PRODUCT_COMBO_COMPONENT_NUMBER, PRODUCT_COMBO_COMPONENT_ONE, PRODUCT_COMBO_COMPONENT_TWO,
+	 PRODUCT_COMBO_COMPONENT_THREE, PRODUCT_COMBO_NUMBER, (SELECT COUNT(PRODUCT_COMBO_COMPONENT_NUMBER)
+	 FROM PRODUCT_COMBO_COMPONENT) AS TOTAL_COUNT_NUMBER, ROW_NUMBER() OVER (ORDER BY PRODUCT_COMBO_COMPONENT_NUMBER DESC)
+	 RN FROM PRODUCT_COMBO_COMPONENT) WHERE RN BETWEEN #{productComboComponentIndex} AND #{productComboComponentContentCount}
+	</select>
+	
+	<!-- 조합 구성품 출력 -->
+	<select id="SELECTALLCOMPONENT" resultMap="productComboComponentMap">
+	SELECT PRODUCT_SINGLE.PRODUCT_SINGLE_NUMBER, PRODUCT_SINGLE.PRODUCT_SINGLE_NAME,
+	 PRODUCT_SINGLE.PRODUCT_SINGLE_IMAGE, ROUND(PRODUCT_SINGLE.PRODUCT_SINGLE_PRICE * (1 - NVL(PRODUCT_SINGLE.PRODUCT_SINGLE_DISCOUNT, 0) / 100), 0)
+	 AS SINGLE_DISCOUNTED_PRICE FROM PRODUCT_COMBO_COMPONENT LEFT JOIN PRODUCT_SINGLE
+	 ON PRODUCT_SINGLE.PRODUCT_SINGLE_NUMBER = PRODUCT_COMBO_COMPONENT.PRODUCT_COMBO_COMPONENT_ONE
+	 OR PRODUCT_SINGLE.PRODUCT_SINGLE_NUMBER = PRODUCT_COMBO_COMPONENT.PRODUCT_COMBO_COMPONENT_TWO
+	 OR PRODUCT_SINGLE.PRODUCT_SINGLE_NUMBER = PRODUCT_COMBO_COMPONENT.PRODUCT_COMBO_COMPONENT_THREE
+	 WHERE PRODUCT_COMBO_COMPONENT.PRODUCT_COMBO_NUMBER = #{productComboNumber}
+	</select>
+	
+	<!-- getOne -->
+	<!-- 조합 상품 구성품 단일 조회-->
+	<select id="SELECTONECOMPONENTNUMBERONLY" resultMap="productComboComponentMap">
+	SELECT PRODUCT_COMBO_COMPONENT_ONE, PRODUCT_COMBO_COMPONENT_TWO, PRODUCT_COMBO_COMPONENT_THREE
+	 FROM PRODUCT_COMBO_COMPONENT WHERE PRODUCT_COMBO_NUMBER = #{productComboNumber}
+	</select>
+	
+	<!-- insert -->
+	<!-- 조합 구성품 추가 -->
+	<insert id="INSERT">
+	INSERT INTO PRODUCT_COMBO_COMPONENT (PRODUCT_COMBO_COMPONENT_NUMBER, PRODUCT_COMBO_COMPONENT_ONE, PRODUCT_COMBO_COMPONENT_TWO,
+	 PRODUCT_COMBO_COMPONENT_THREE, PRODUCT_COMBO_NUMBER) VALUES (SEQ_PRODUCT_COMBO_COMPONENT.NEXTVAL, #{productComboComponentOne}, #{productComboComponentTwo}, #{productComboComponentThree}, #{productComboNumber})
+	</insert>
+	<!-- update
+	<update id="">
+	</update> -->
+
+	<!-- delete -->
+	<!-- 상품 구성품 삭제 -->
+	<delete id="DELETE">
+	DELETE FROM PRODUCT_COMBO_COMPONENT WHERE PRODUCT_COMBO_COMPONENT_NUMBER = #{productComboComponentNumber}
+	</delete>
+</mapper>

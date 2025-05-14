@@ -1,0 +1,15 @@
+@charset "UTF-8";
+
+.product_count_area .product_count span:hover {
+	cursor: pointer;
+}
+
+.desc .comment input {
+	width: 100%;
+}
+
+.readonlyReview {
+	border: none;
+	outline: none;
+	cursor: default;
+}

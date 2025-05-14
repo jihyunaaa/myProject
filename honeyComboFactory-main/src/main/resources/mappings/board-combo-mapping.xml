@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="BoardComboDAO">
+
+	<resultMap id="boardComboMap" type="boardCombo">
+		<id property="boardComboNumber" column="BOARD_COMBO_NUMBER" />
+		<result property="boardComboTitle" column="BOARD_COMBO_TITLE" />
+		<result property="boardComboContent" column="BOARD_COMBO_CONTENT" />
+		<result property="boardComboRegisterDate"
+			column="BOARD_COMBO_REGISTER_DATE" />
+		<result property="boardComboViewCount" column="BOARD_COMBO_VIEW_COUNT" />
+		<result property="memberNumber" column="MEMBER_NUMBER" />
+		<result property="memberName" column="MEMBER_NAME" />
+		<result property="memberIsAdmin" column="MEMBER_IS_ADMIN" />
+		<result property="boardComboLikedCount" column="BOARD_COMBO_LIKED_COUNT" />
+		<result property="totalCountNumber" column="TOTAL_COUNT_NUMBER" />
+	</resultMap>
+
+
+	<!-- getAll -->
+	<!-- 게시판 글 목록 통합 동적 쿼리 -->
+	<select id="SELECTALLDYNAMIC" resultMap="boardComboMap">
+	  <choose>
+	    <!-- 관리자 전체 글: 페이징 없이 정렬만 적용 -->
+	    <when test="condition == 'SELECTALLADMINCONTENT'">
+	      SELECT
+	        BOARD_COMBO_NUMBER,
+	        MEMBER_NUMBER,
+	        MEMBER_NAME,
+	        MEMBER_IS_ADMIN,
+	        BOARD_COMBO_TITLE,
+	        BOARD_COMBO_CONTENT,
+	        BOARD_COMBO_REGISTER_DATE,
+	        BOARD_COMBO_VIEW_COUNT,
+	        BOARD_COMBO_LIKED_COUNT,
+	        COUNT(BOARD_COMBO_NUMBER) OVER() AS TOTAL_COUNT_NUMBER
+	      FROM VIEW_BOARD_COMBO
+	      WHERE MEMBER_IS_ADMIN = 1
+	      ORDER BY BOARD_COMBO_REGISTER_DATE DESC
+	    </when>
+	
+	    <!-- 그 외 조건: 페이징 적용 -->
+	    <otherwise>
+	      SELECT
+	        BOARD_COMBO_NUMBER,
+	        MEMBER_NUMBER,
+	        MEMBER_NAME,
+	        MEMBER_IS_ADMIN,
+	        BOARD_COMBO_TITLE,
+	        BOARD_COMBO_CONTENT,
+	        BOARD_COMBO_REGISTER_DATE,
+	        BOARD_COMBO_VIEW_COUNT,
+	        BOARD_COMBO_LIKED_COUNT,
+	        TOTAL_COUNT_NUMBER
+	      FROM (
+	        SELECT
+	          BOARD_COMBO_NUMBER,
+	          MEMBER_NUMBER,
+	          MEMBER_NAME,
+	          MEMBER_IS_ADMIN,
+	          BOARD_COMBO_TITLE,
+	          BOARD_COMBO_CONTENT,
+	          BOARD_COMBO_REGISTER_DATE,
+	          BOARD_COMBO_VIEW_COUNT,
+	          BOARD_COMBO_LIKED_COUNT,
+	          COUNT(BOARD_COMBO_NUMBER) OVER() AS TOTAL_COUNT_NUMBER,
+	          ROW_NUMBER() OVER (
+	            ORDER BY
+	            <choose>
+	              <!-- 최신순 -->
+	              <when test="condition == 'SELECTALLMEMBERCONTENTDESC' or 
+	                           condition == 'SELECTALLCOMBOBOARDSEARCHDESC' or 
+	                           condition == 'SELECTALLCOMBOBOARDDESC' or 
+	                           condition == 'SELECTALLMEMBERWRITE'">
+	                BOARD_COMBO_REGISTER_DATE DESC
+	              </when>
+	
+	              <!-- 오래된순 -->
+	              <when test="condition == 'SELECTALLMEMBERCONTENTASC' or 
+	                           condition == 'SELECTALLCOMBOBOARDSEARCHASC' or 
+	                           condition == 'SELECTALLCOMBOBOARDASC'">
+	                BOARD_COMBO_REGISTER_DATE ASC
+	              </when>
+	
+	              <!-- 인기순 -->
+	              <when test="condition == 'SELECTALLMEMBERCONTENTPOPULAR' or 
+	                           condition == 'SELECTALLCOMBOBOARDSEARCHPOPULAR' or 
+	                           condition == 'SELECTALLCOMBOBOARDPOPULAR'">
+	                BOARD_COMBO_LIKED_COUNT DESC
+	              </when>
+	
+	              <!-- 기본 정렬 -->
+	              <otherwise>
+	                BOARD_COMBO_NUMBER DESC
+	              </otherwise>
+	            </choose>
+	          ) RN
+	        FROM VIEW_BOARD_COMBO
+	        <where>
+	          <choose>
+	            <!-- 회원 작성 글 필터 -->
+	            <when test="condition == 'SELECTALLMEMBERCONTENTDESC' or 
+	                         condition == 'SELECTALLMEMBERCONTENTASC' or 
+	                         condition == 'SELECTALLMEMBERCONTENTPOPULAR' or 
+	                         condition == 'SELECTALLCOMBOBOARDSEARCHDESC' or 
+	                         condition == 'SELECTALLCOMBOBOARDSEARCHASC' or 
+	                         condition == 'SELECTALLCOMBOBOARDSEARCHPOPULAR' or 
+	                         condition == 'SELECTALLCOMBOBOARDDESC' or 
+	                         condition == 'SELECTALLCOMBOBOARDASC' or 
+	                         condition == 'SELECTALLCOMBOBOARDPOPULAR' or 
+	                         condition == 'SELECTALLMEMBERWRITE'">
+	              MEMBER_IS_ADMIN = 0
+	            </when>
+	          </choose>
+	
+	          <!-- 회원 번호 필터 -->
+	          <if test="memberNumber != 0">
+	            AND MEMBER_NUMBER = #{memberNumber}
+	          </if>
+	
+	          <!-- 검색 키워드 필터 -->
+	          <if test="searchKeyword != null and searchKeyword != ''">
+	            <![CDATA[
+	              AND BOARD_COMBO_TITLE LIKE '%' || #{searchKeyword} || '%'
+	            ]]>
+	          </if>
+	        </where>
+	      )
+	      WHERE RN BETWEEN #{boardComboIndex} AND #{boardComboContentCount}
+	    </otherwise>
+	  </choose>
+	</select>
+
+
+	<!-- getOne -->
+	<!-- 게시글 상세 조회 -->
+	<select id="SELECTONECOMBOBOARD" resultMap="boardComboMap">
+		SELECT BOARD_COMBO_NUMBER, MEMBER_NUMBER, MEMBER_NAME, MEMBER_IS_ADMIN,
+		BOARD_COMBO_TITLE, BOARD_COMBO_CONTENT, BOARD_COMBO_REGISTER_DATE,
+		BOARD_COMBO_VIEW_COUNT, BOARD_COMBO_LIKED_COUNT FROM VIEW_BOARD_COMBO
+		WHERE BOARD_COMBO_NUMBER = #{boardComboNumber}
+	</select>
+
+	<!-- insert -->
+	<!-- 게시글 등록 -->
+	<insert id="INSERTCOMBOBOARD">
+		INSERT INTO BOARD_COMBO (BOARD_COMBO_NUMBER, BOARD_COMBO_TITLE,
+		BOARD_COMBO_CONTENT, MEMBER_NUMBER)
+		VALUES (SEQ_BOARD_COMBO.NEXTVAL, #{boardComboTitle},
+		#{boardComboContent}, #{memberNumber})
+	</insert>
+
+	<!-- update -->
+	<!-- 게시글 수정 -->
+	<update id="UPDATECOMBOBOARD">
+		UPDATE BOARD_COMBO SET BOARD_COMBO_TITLE = #{boardComboTitle},
+		BOARD_COMBO_CONTENT = #{boardComboContent} WHERE BOARD_COMBO_NUMBER =
+		#{boardComboNumber}
+	</update>
+
+	<!-- delete -->
+	<!-- 게시글 삭제 -->
+	<delete id="DELETECOMBOBOARD">
+		DELETE FROM BOARD_COMBO WHERE BOARD_COMBO_NUMBER = #{boardComboNumber}
+	</delete>
+
+</mapper>

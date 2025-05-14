@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE configuration PUBLIC "-//mybatis.org//DTD Config 3.0//EN" "http://mybatis.org/dtd/mybatis-3-config.dtd">
+<configuration>
+
+	<!-- alias 설정 -->
+	<typeAliases>
+		<!-- BoardCombo -->
+		<typeAlias type ="zic.honeyComboFactory.biz.boardComboVO.BoardComboVO" alias = "boardCombo"/>
+		<!-- BoardComboLiked -->
+		<typeAlias type="zic.honeyComboFactory.biz.boardComboLikedVO.BoardComboLikedVO" alias = "boardComboLiked" />
+		<!-- Member -->
+		<typeAlias type="zic.honeyComboFactory.biz.memberVO.MemberVO" alias = "member" />
+		<!-- ProductCombo -->
+		<typeAlias type="zic.honeyComboFactory.biz.productComboVO.ProductComboVO" alias = "productCombo" />
+		<!-- ProductComboComponent -->
+		<typeAlias type="zic.honeyComboFactory.biz.productComboComponentVO.ProductComboComponentVO" alias = "productComboComponent" />
+		<!-- ProductSingle -->
+		<typeAlias type="zic.honeyComboFactory.biz.productSingleVO.ProductSingleVO" alias = "productSingle" />
+		<!-- Purchase -->
+		<typeAlias type="zic.honeyComboFactory.biz.purchaseVO.PurchaseVO" alias = "purchase" />
+		<!-- Purchase Detail -->
+		<typeAlias type="zic.honeyComboFactory.biz.purchaseDetailVO.PurchaseDetailVO" alias = "purchaseDetail" />
+		<!-- Review -->
+		<typeAlias type="zic.honeyComboFactory.biz.reviewVO.ReviewVO" alias = "review" />
+	</typeAliases>
+	
+	<!-- mapper 설정 알려주기 -->
+	<mappers>
+		<!-- BoardCombo -->
+		<mapper resource = "mappings/board-combo-mapping.xml"/>
+		<!-- BoardComboLiked -->
+		<mapper resource = "mappings/board-combo-liked-mapping.xml"/>
+		<!-- Member -->
+		<mapper resource = "mappings/member-mapping.xml"/>
+		<!-- ProductCombo -->
+		<mapper resource = "mappings/product-combo-mapping.xml"/>
+		<!-- ProductComboComponent -->
+		<mapper resource = "mappings/product-combo-component-mapping.xml"/>
+		<!-- ProductSingle -->
+		<mapper resource = "mappings/product-single-mapping.xml"/>
+		<!-- Purchase -->
+		<mapper resource = "mappings/purchase-mapping.xml"/>
+		<!-- Purchase Detail -->
+		<mapper resource = "mappings/purchase-detail-mapping.xml"/>
+		<!-- Review -->
+		<mapper resource = "mappings/review-mapping.xml"/>
+	</mappers>
+
+</configuration>

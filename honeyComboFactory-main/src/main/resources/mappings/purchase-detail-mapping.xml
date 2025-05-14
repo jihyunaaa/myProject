@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="PurchaseDetailDAO">
+
+	<resultMap id="purchaseDetailMap" type="purchaseDetail">
+		<result property="purchaseDetailNumber" column="PURCHASE_DETAIL_NUMBER"/>
+		<result property="purchaseNumber" column="PURCHASE_NUMBER"/>
+		<result property="memberNumber" column="MEMBER_NUMBER"/>
+		<result property="productSingleNumber" column="PRODUCT_SINGLE_NUMBER"/>
+		<result property="productSingleName" column="PRODUCT_SINGLE_NAME"/>
+		<result property="productSinglePrice" column="PRODUCT_SINGLE_PRICE"/>
+		<result property="productSingleDiscount" column="PRODUCT_SINGLE_DISCOUNT"/>
+		<result property="productSingleDiscountedPrice" column="SINGLE_DISCOUNTED_PRICE"/>
+		<result property="productComboNumber" column="PRODUCT_COMBO_NUMBER"/>
+		<result property="productComboName" column="PRODUCT_COMBO_NAME"/>
+		<result property="productComboPrice" column="PRODUCT_COMBO_PRICE"/>
+		<result property="productComboDiscount" column="PRODUCT_COMBO_DISCOUNT"/>
+		<result property="productComboDiscountedPrice" column="COMBO_DISCOUNTED_PRICE"/>
+		<result property="purchaseProductCount" column="PURCHASE_PRODUCT_COUNT"/>
+		<result property="purchaseTotalPrice" column="PURCHASE_TOTAL_PRICE"/>
+	</resultMap>
+
+	<!-- getAll -->
+	<!-- 주문 상세 조회 -->
+	<select id="SELECTALL" resultMap="purchaseDetailMap">
+	SELECT PURCHASE_DETAIL_NUMBER, PURCHASE_NUMBER, MEMBER_NUMBER, PRODUCT_SINGLE_NUMBER, PRODUCT_SINGLE_NAME, PRODUCT_SINGLE_PRICE,
+	 PRODUCT_SINGLE_DISCOUNT, SINGLE_DISCOUNTED_PRICE, PRODUCT_COMBO_NUMBER, PRODUCT_COMBO_NAME, PRODUCT_COMBO_PRICE, PRODUCT_COMBO_DISCOUNT,
+	 COMBO_DISCOUNTED_PRICE, PURCHASE_PRODUCT_COUNT, PURCHASE_TOTAL_PRICE FROM VIEW_PURCHASE_DETAIL WHERE PURCHASE_NUMBER = #{purchaseNumber}
+	</select>
+	
+	<!-- getOne
+	<select id="" resultType="purchaseDetail">
+	</select> -->
+	
+	<!-- insert -->
+	<!-- 주문 상세 등록 -->
+	<insert id="INSERT">
+	INSERT INTO PURCHASE_DETAIL (PURCHASE_DETAIL_NUMBER, PURCHASE_PRODUCT_COUNT, PRODUCT_SINGLE_NUMBER, PRODUCT_COMBO_NUMBER,
+	 PURCHASE_NUMBER) VALUES (SEQ_PURCHASE_DETAIL.NEXTVAL, #{purchaseProductCount}, #{productSingleNumber}, #{productComboNumber}, #{purchaseNumber})
+	</insert>
+	
+	<!-- update
+	<update id="">
+	</update> -->
+	
+	<!-- delete
+	<delete id="">
+	</delete> -->
+
+</mapper>

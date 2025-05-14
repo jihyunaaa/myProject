@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="ProductSingleDAO">
+
+	<resultMap id="productSingleMap" type="productSingle">
+	    <result property="productSingleNumber" column="PRODUCT_SINGLE_NUMBER"/>
+	    <result property="productSingleName" column="PRODUCT_SINGLE_NAME"/>
+	    <result property="productSinglePrice" column="PRODUCT_SINGLE_PRICE"/>
+	    <result property="productSingleDiscount" column="PRODUCT_SINGLE_DISCOUNT"/>
+	    <result property="productSingleDiscountedPrice" column="SINGLE_DISCOUNTED_PRICE"/>
+	    <result property="productSingleImage" column="PRODUCT_SINGLE_IMAGE"/>
+	    <result property="productSingleStore" column="PRODUCT_SINGLE_STORE"/>
+	    <result property="productSingleCategory" column="PRODUCT_SINGLE_CATEGORY"/>
+	    <result property="productSingleStock" column="PRODUCT_SINGLE_STOCK"/>
+	    <result property="productSingleInformation" column="PRODUCT_SINGLE_INFORMATION"/>
+	    <result property="totalCountNumber" column="TOTAL_COUNT_NUMBER"/>
+	</resultMap>
+
+
+	<!-- getAll -->
+	<select id="SELECTALLDYNAMIC" resultMap="productSingleMap">
+  	SELECT
+    PRODUCT_SINGLE_NUMBER,
+    PRODUCT_SINGLE_NAME,
+    PRODUCT_SINGLE_PRICE,
+    PRODUCT_SINGLE_DISCOUNT,
+    SINGLE_DISCOUNTED_PRICE,
+    PRODUCT_SINGLE_IMAGE,
+    PRODUCT_SINGLE_STORE,
+    PRODUCT_SINGLE_CATEGORY,
+    PRODUCT_SINGLE_STOCK,
+    <!-- 인기순 정렬 시에만 TOTAL_SALES 컬럼 포함 -->
+    <if test="condition.contains('POPULAR')">
+      TOTAL_SALES,
+    </if>
+    TOTAL_COUNT_NUMBER
+ 	 FROM (
+    	SELECT
+	      PRODUCT_SINGLE_NUMBER,
+	      PRODUCT_SINGLE_NAME,
+	      PRODUCT_SINGLE_PRICE,
+	      PRODUCT_SINGLE_DISCOUNT,
+	      SINGLE_DISCOUNTED_PRICE,
+	      PRODUCT_SINGLE_IMAGE,
+	      PRODUCT_SINGLE_STORE,
+	      PRODUCT_SINGLE_CATEGORY,
+	      PRODUCT_SINGLE_STOCK,
+      <!-- 인기순 정렬 시에만 TOTAL_SALES 컬럼 포함 -->
+      <if test="condition.contains('POPULAR')">
+        NVL(TOTAL_SALES, 0) AS TOTAL_SALES,
+      </if>
+      COUNT(PRODUCT_SINGLE_NUMBER) OVER() AS TOTAL_COUNT_NUMBER,
+      ROW_NUMBER() OVER (
+        <!-- 정렬 조건 분기-->
+        ORDER BY
+        <choose>
+          <!-- 인기순 정렬 (총 판매량 DESC) -->
+          <when test="condition == 'SELECTALLCATEGORYPOPULAR'
+                   or condition == 'SELECTALLSEARCHPOPULAR'
+                   or condition == 'SELECTALLPOPULAR'">
+            TOTAL_SALES DESC
+          </when>
+
+          <!-- 가격 높은 순 정렬 -->
+          <when test="condition == 'SELECTALLCATEGORYPRICEDESC'
+                   or condition == 'SELECTALLSEARCHPRICEDESC'
+                   or condition == 'SELECTALLPRICEDESC'">
+            SINGLE_DISCOUNTED_PRICE DESC
+          </when>
+
+          <!-- 가격 낮은 순 정렬 -->
+          <when test="condition == 'SELECTALLCATEGORYPRICEASC'
+                   or condition == 'SELECTALLSEARCHPRICEASC'
+                   or condition == 'SELECTALLPRICEASC'">
+            SINGLE_DISCOUNTED_PRICE ASC
+          </when>
+
+          <!-- 재고 많은 순 정렬 -->
+          <when test="condition == 'SELECTALLSTOCKDESC'">
+            PRODUCT_SINGLE_STOCK DESC
+          </when>
+
+          <!-- 기본 정렬: 최신순 (상품 번호 내림차순) -->
+          <otherwise>
+            PRODUCT_SINGLE_NUMBER DESC
+          </otherwise>
+        </choose>
+	      ) RN
+	    FROM VIEW_PRODUCT_SINGLE
+	    <where>
+	      <!-- 편의점 필터 -->
+	      <if test="productSingleStore != null and productSingleStore != ''">
+	        PRODUCT_SINGLE_STORE = #{productSingleStore}
+	      </if>
+	
+	      <!-- 카테고리 필터 -->
+	      <if test="productSingleCategory != null and productSingleCategory != ''">
+	        AND PRODUCT_SINGLE_CATEGORY = #{productSingleCategory}
+	      </if>
+	
+	      <!-- 상품 이름 검색 -->
+	      <if test="searchKeyword != null and searchKeyword != ''">
+	      <![CDATA[
+	        AND PRODUCT_SINGLE_NAME LIKE '%' || #{searchKeyword} || '%'
+	      ]]>
+	      </if>
+	    </where>
+	  )
+	  <!-- 페이징 처리 -->
+	  WHERE RN BETWEEN #{startIndex} AND #{limitNumber}
+	</select>
+	
+	<!-- getOne -->
+	<!-- 상품 상세 정보 -->
+	<select id="SELECTONE" resultMap="productSingleMap">
+	SELECT PRODUCT_SINGLE_NUMBER, PRODUCT_SINGLE_NAME, PRODUCT_SINGLE_CATEGORY, PRODUCT_SINGLE_PRICE, PRODUCT_SINGLE_DISCOUNT,
+	 SINGLE_DISCOUNTED_PRICE, PRODUCT_SINGLE_IMAGE, PRODUCT_SINGLE_STOCK, PRODUCT_SINGLE_INFORMATION FROM VIEW_PRODUCT_SINGLE
+	 WHERE PRODUCT_SINGLE_NUMBER = #{productSingleNumber}
+	</select>
+	<!-- 개별 상품 판매가격 및 이름 -->
+	<select id="SELECTONESINGLEDISCOUNTEDPRICEANDSINGLENAME" resultMap="productSingleMap">
+	SELECT PRODUCT_SINGLE_NAME, SINGLE_DISCOUNTED_PRICE FROM VIEW_PRODUCT_SINGLE WHERE PRODUCT_SINGLE_NUMBER = #{productSingleNumber}
+	</select>
+	<!-- 개별 상품 재고 및 카테고리 정보 -->
+	<select id="SELECTONESTOCKANDCATEGORY" resultMap="productSingleMap">
+	SELECT PRODUCT_SINGLE_STOCK, PRODUCT_SINGLE_CATEGORY FROM VIEW_PRODUCT_SINGLE WHERE PRODUCT_SINGLE_NUMBER = #{productSingleNumber}
+	</select>
+	<!-- 개별상품 DB락 -->
+	<select id="LOCKPRODUCTSINGLESTOCKFORUPDATE" resultMap="productSingleMap">
+	SELECT PRODUCT_SINGLE_STOCK FROM PRODUCT_SINGLE WHERE PRODUCT_SINGLE_NUMBER = #{productSingleNumber} FOR UPDATE
+	</select>
+	
+	<!-- insert -->
+	
+	<!-- 상품명 중복 확인 -->
+	<select id="EXISTSBYNAME" resultType="int">
+	SELECT COUNT(*) FROM PRODUCT_SINGLE WHERE PRODUCT_SINGLE_NAME = #{productSingleName}
+	</select>
+	
+	<!-- 브랜드별 상품번호 시퀀스 -->
+	<select id="GETMAXPRODUCTSINGLENUMBERBYBRAND" resultType="long">
+	SELECT NVL(MAX(PRODUCT_SINGLE_NUMBER), #{defaultValue}) FROM PRODUCT_SINGLE WHERE PRODUCT_SINGLE_NUMBER BETWEEN #{base} AND #{maxRange}
+	</select>
+	
+	<!-- 상품 등록 -->
+	<insert id="INSERT">
+	INSERT INTO PRODUCT_SINGLE (PRODUCT_SINGLE_NUMBER, PRODUCT_SINGLE_NAME, PRODUCT_SINGLE_PRICE, PRODUCT_SINGLE_STOCK,
+	 PRODUCT_SINGLE_IMAGE, PRODUCT_SINGLE_STORE, PRODUCT_SINGLE_CATEGORY, PRODUCT_SINGLE_INFORMATION, PRODUCT_SINGLE_DISCOUNT)
+	 VALUES (#{productSingleNumber}, #{productSingleName}, #{productSinglePrice}, #{productSingleStock}, #{productSingleImage}, #{productSingleStore}, #{productSingleCategory}, #{productSingleInformation, jdbcType=VARCHAR}, #{productSingleDiscount})
+	</insert>
+	
+	<!-- update -->
+	<!-- 개별 상품 재고 변경-->
+	<update id="UPDATESTOCKDECREASEONLY">
+	<![CDATA[
+	UPDATE PRODUCT_SINGLE SET PRODUCT_SINGLE_STOCK = PRODUCT_SINGLE_STOCK - #{productSingleCount} WHERE PRODUCT_SINGLE_NUMBER = #{productSingleNumber}
+	]]>
+	</update>
+	
+	<!-- delete
+	<delete id="">
+	</delete> -->
+
+</mapper>

@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="BoardComboLikedDAO">
+
+	<resultMap id="boardComboLikedMap" type="boardComboLiked">
+		<id property="boardComboLikedNumber" column="BOARD_COMBO_LIKED_NUMBER" />
+		<result property="boardComboNumber" column="BOARD_COMBO_NUMBER" />
+		<result property="boardComboTitle" column="BOARD_COMBO_TITLE" />
+		<result property="memberName" column="MEMBER_NAME" />
+		<result property="memberNumber" column="MEMBER_NUMBER" />
+		<result property="totalCountNumber" column="TOTAL_COUNT_NUMBER" />
+	</resultMap>
+
+
+	<!-- getAll -->
+	<select id="SELECTALL" resultMap="boardComboLikedMap">
+	SELECT BOARD_COMBO_LIKED_NUMBER, BOARD_COMBO_NUMBER, BOARD_COMBO_TITLE, MEMBER_NAME, MEMBER_NUMBER,
+			 TOTAL_COUNT_NUMBER FROM (SELECT BOARD_COMBO_LIKED.BOARD_COMBO_LIKED_NUMBER, BOARD_COMBO_LIKED.BOARD_COMBO_NUMBER,
+			 BOARD_COMBO.BOARD_COMBO_TITLE, MEMBER.MEMBER_NAME, BOARD_COMBO_LIKED.MEMBER_NUMBER, COUNT(BOARD_COMBO_LIKED.BOARD_COMBO_NUMBER) OVER()
+			 AS TOTAL_COUNT_NUMBER, ROW_NUMBER() OVER (ORDER BY BOARD_COMBO_LIKED.BOARD_COMBO_NUMBER DESC) RN FROM BOARD_COMBO_LIKED JOIN BOARD_COMBO
+			 ON BOARD_COMBO_LIKED.BOARD_COMBO_NUMBER = BOARD_COMBO.BOARD_COMBO_NUMBER JOIN MEMBER ON BOARD_COMBO.MEMBER_NUMBER = MEMBER.MEMBER_NUMBER
+			 WHERE BOARD_COMBO_LIKED.MEMBER_NUMBER = #{memberNumber}) WHERE RN BETWEEN #{boardComboLikedIndex} AND #{boardComboLikedContentCount}
+	</select>
+	
+	<!-- getOne -->
+	<select id="SELECTONE" resultMap="boardComboLikedMap">
+	SELECT BOARD_COMBO_LIKED_NUMBER, MEMBER_NUMBER, BOARD_COMBO_NUMBER FROM BOARD_COMBO_LIKED
+			 WHERE MEMBER_NUMBER = #{memberNumber} AND BOARD_COMBO_NUMBER = #{boardComboNumber}
+	</select>
+	
+	<!-- insert -->
+	<insert id="INSERTBOARDCOMBOLIKED">
+	INSERT INTO BOARD_COMBO_LIKED (BOARD_COMBO_LIKED_NUMBER, MEMBER_NUMBER, BOARD_COMBO_NUMBER)
+			 VALUES (SEQ_BOARD_COMBO_LIKED.NEXTVAL, #{memberNumber}, #{boardComboNumber})
+	</insert>
+	
+	<!-- update 
+	<update id="">
+	</update> -->
+	
+	<!-- delete -->
+	<delete id="DELETEBOARDCOMBOLIKED">
+	DELETE FROM BOARD_COMBO_LIKED WHERE MEMBER_NUMBER = #{memberNumber} AND BOARD_COMBO_NUMBER = #{boardComboNumber}
+	</delete>
+	
+</mapper>
